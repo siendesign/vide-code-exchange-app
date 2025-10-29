@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+  wallets      Wallet[]
+
+  @@map("users")
+}
+
+model Currency {
+  id        String   @id @default(cuid())
+  code      String   @unique // BTC, ETH, USDT, etc.
+  name      String
+  symbol    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fromTransactions Transaction[] @relation("FromCurrency")
+  toTransactions   Transaction[] @relation("ToCurrency")
+  wallets          Wallet[]
+  rates            ExchangeRate[] @relation("BaseCurrency")
+  targetRates      ExchangeRate[] @relation("TargetCurrency")
+
+  @@map("currencies")
+}
+
+model Wallet {
+  id         String   @id @default(cuid())
+  userId     String
+  currencyId String
+  balance    Decimal  @default(0) @db.Decimal(20, 8)
+  address    String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency Currency @relation(fields: [currencyId], references: [id])
+
+  @@unique([userId, currencyId])
+  @@map("wallets")
+}
+
+model Transaction {
+  id             String            @id @default(cuid())
+  userId         String
+  fromCurrencyId String
+  toCurrencyId   String
+  fromAmount     Decimal           @db.Decimal(20, 8)
+  toAmount       Decimal           @db.Decimal(20, 8)
+  exchangeRate   Decimal           @db.Decimal(20, 8)
+  fee            Decimal           @default(0) @db.Decimal(20, 8)
+  status         TransactionStatus @default(PENDING)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id])
+  fromCurrency Currency @relation("FromCurrency", fields: [fromCurrencyId], references: [id])
+  toCurrency   Currency @relation("ToCurrency", fields: [toCurrencyId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@map("transactions")
+}
+
+model ExchangeRate {
+  id               String   @id @default(cuid())
+  baseCurrencyId   String
+  targetCurrencyId String
+  rate             Decimal  @db.Decimal(20, 8)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  baseCurrency   Currency @relation("BaseCurrency", fields: [baseCurrencyId], references: [id])
+  targetCurrency Currency @relation("TargetCurrency", fields: [targetCurrencyId], references: [id])
+
+  @@unique([baseCurrencyId, targetCurrencyId])
+  @@map("exchange_rates")
+}
