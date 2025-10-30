@@ -12,18 +12,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Basic middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// Security middleware
-app.use(helmet());
-app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
-
-// Logging middleware
-app.use(morgan("common"));
-
-// CORS Configuration
+// CORS Configuration - MUST come before helmet
 const corsOptions = {
   origin: function (origin: any, callback: any) {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -49,8 +38,23 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-// CORS middleware
+// Apply CORS first
 app.use(cors(corsOptions));
+
+// Basic middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Security middleware - configured to work with CORS
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  })
+);
+
+// Logging middleware
+app.use(morgan("common"));
 
 // Health check
 app.get('/health', (req, res) => {
