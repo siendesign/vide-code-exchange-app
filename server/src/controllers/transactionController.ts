@@ -1,12 +1,10 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
-import { AuthRequest } from '../middleware/auth';
 import { Decimal } from '@prisma/client/runtime/library';
 
-export const createTransaction = async (req: AuthRequest, res: Response) => {
+export const createTransaction = async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.userId;
-    const { fromCurrencyId, toCurrencyId, fromAmount } = req.body;
+    const { fromCurrencyId, toCurrencyId, fromAmount, userId } = req.body;
 
     if (!fromCurrencyId || !toCurrencyId || !fromAmount) {
       return res.status(400).json({ error: 'All fields are required' });
@@ -31,10 +29,10 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
     const toAmount = fromAmountDecimal.mul(exchangeRate.rate);
     const fee = fromAmountDecimal.mul(0.01); // 1% fee
 
-    // Create transaction
+    // Create transaction (userId is optional now)
     const transaction = await prisma.transaction.create({
       data: {
-        userId,
+        userId: userId || null,
         fromCurrencyId,
         toCurrencyId,
         fromAmount: fromAmountDecimal,
@@ -56,23 +54,12 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getTransactions = async (req: AuthRequest, res: Response) => {
+export const getTransactions = async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.userId;
-    const isAdmin = req.user!.role === 'ADMIN';
-
     const transactions = await prisma.transaction.findMany({
-      where: isAdmin ? {} : { userId },
       include: {
         fromCurrency: true,
         toCurrency: true,
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-          },
-        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -84,33 +71,20 @@ export const getTransactions = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getTransaction = async (req: AuthRequest, res: Response) => {
+export const getTransaction = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user!.userId;
-    const isAdmin = req.user!.role === 'ADMIN';
 
     const transaction = await prisma.transaction.findUnique({
       where: { id },
       include: {
         fromCurrency: true,
         toCurrency: true,
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-          },
-        },
       },
     });
 
     if (!transaction) {
       return res.status(404).json({ error: 'Transaction not found' });
-    }
-
-    if (!isAdmin && transaction.userId !== userId) {
-      return res.status(403).json({ error: 'Access denied' });
     }
 
     res.json(transaction);
@@ -120,7 +94,7 @@ export const getTransaction = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const updateTransactionStatus = async (req: AuthRequest, res: Response) => {
+export const updateTransactionStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -145,12 +119,9 @@ export const updateTransactionStatus = async (req: AuthRequest, res: Response) =
   }
 };
 
-export const getWallets = async (req: AuthRequest, res: Response) => {
+export const getWallets = async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.userId;
-
     const wallets = await prisma.wallet.findMany({
-      where: { userId },
       include: {
         currency: true,
       },

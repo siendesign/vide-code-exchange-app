@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiClient } from '@/lib/api';
 import { connectSocket, disconnectSocket } from '@/lib/socket';
-import { ArrowRight, LogOut, Wallet, RefreshCw } from 'lucide-react';
+import { ArrowRight, Wallet, RefreshCw } from 'lucide-react';
 
 interface Currency {
   id: string;
@@ -45,18 +45,16 @@ export default function DashboardPage() {
 
   const loadData = async () => {
     try {
-      const [profileData, currenciesData, transactionsData] = await Promise.all([
-        apiClient.getProfile(),
+      const [currenciesData, transactionsData] = await Promise.all([
         apiClient.getCurrencies(),
         apiClient.getTransactions(),
       ]);
 
-      setUser(profileData);
       setCurrencies(currenciesData);
       setTransactions(transactionsData);
 
       // Connect to WebSocket
-      const socket = connectSocket(profileData.id);
+      const socket = connectSocket('default-user');
       socket.on('transaction-updated', (transaction: Transaction) => {
         setTransactions((prev) => {
           const index = prev.findIndex((t) => t.id === transaction.id);
@@ -74,9 +72,7 @@ export default function DashboardPage() {
         apiClient.getCurrencies().then(setCurrencies);
       });
     } catch (err: any) {
-      if (err.message.includes('token')) {
-        router.push('/login');
-      }
+      console.error('Failed to load data:', err);
     }
 
     return () => {
@@ -107,11 +103,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = () => {
-    apiClient.setToken(null);
-    disconnectSocket();
-    router.push('/');
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -135,15 +126,6 @@ export default function DashboardPage() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="text-2xl font-bold text-blue-600">CryptoXchange</div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600 dark:text-gray-300">
-                {user?.email}
-              </span>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
           </div>
         </div>
       </nav>

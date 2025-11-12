@@ -6,15 +6,14 @@ import {
   updateTransactionStatus,
   getWallets,
 } from '../controllers/transactionController';
-import { authMiddleware, adminMiddleware } from '../middleware/auth';
 
 const router = Router();
 
-router.post('/transactions', authMiddleware, createTransaction);
-router.get('/transactions', authMiddleware, getTransactions);
-router.get('/transactions/:id', authMiddleware, getTransaction);
-router.put('/transactions/:id/status', authMiddleware, adminMiddleware, updateTransactionStatus);
+router.post('/transactions', createTransaction);
+router.get('/transactions', getTransactions);
+router.get('/transactions/:id', getTransaction);
+router.put('/transactions/:id/status', updateTransactionStatus);
 
-router.get('/wallets', authMiddleware, getWallets);
+router.get('/wallets', getWallets);
 
 export default router;

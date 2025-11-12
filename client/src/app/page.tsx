@@ -10,16 +10,10 @@ export default function Home() {
           <div className="text-2xl font-bold text-blue-600">CryptoXchange</div>
           <div className="space-x-4">
             <Link
-              href="/login"
-              className="px-4 py-2 text-gray-700 hover:text-blue-600 dark:text-gray-300"
-            >
-              Login
-            </Link>
-            <Link
-              href="/register"
+              href="/dashboard"
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
-              Sign Up
+              Go to Dashboard
             </Link>
           </div>
         </div>
@@ -38,16 +32,10 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center">
             <Link
-              href="/register"
+              href="/dashboard"
               className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
             >
               Get Started <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link
-              href="/login"
-              className="px-8 py-3 border border-gray-300 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-            >
-              Learn More
             </Link>
           </div>
         </div>

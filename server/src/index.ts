@@ -3,7 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import authRoutes from './routes/authRoutes';
 import currencyRoutes from './routes/currencyRoutes';
 import transactionRoutes from './routes/transactionRoutes';
 
@@ -35,7 +34,7 @@ const corsOptions = {
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type'],
 };
 
 // Apply CORS first
@@ -71,7 +70,6 @@ app.get('/api/test-cors', (req, res) => {
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
 app.use('/api', currencyRoutes);
 app.use('/api', transactionRoutes);
 
